@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">钢琴打卡</string>
+    <string name="notification_channel_name">钢琴监督服务</string>
+    <string name="notification_channel_desc">后台监听弹琴状态并语音提醒</string>
+</resources>
