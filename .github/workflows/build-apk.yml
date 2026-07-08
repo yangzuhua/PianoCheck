@@ -22,10 +22,15 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Export ANDROID_HOME explicitly
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
+
       - name: Install SDK packages & accept licenses
         run: |
           yes | sdkmanager --licenses
-          sdkmanager "platforms;android-34" "build-tools;34.0.0"
+          sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
 
       - name: Install Gradle 8.9
         run: |
@@ -33,28 +38,33 @@ jobs:
           unzip -q /tmp/gradle.zip -d $HOME/gradle
           echo "$HOME/gradle/gradle-8.9/bin" >> "$GITHUB_PATH"
 
-      - name: Debug env
+      - name: Write local.properties (so AGP finds the SDK)
         run: |
-          echo "JAVA_HOME=$JAVA_HOME"
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          which gradle
-          gradle --version
-          ls -la settings.gradle.kts build.gradle.kts app/build.gradle.kts
-          echo "---"
-          echo "PATH=$PATH"
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "wrote local.properties:"
+          cat local.properties
 
       - name: Build release APK
-        run: >
-          gradle :app:assembleRelease
-          --stacktrace
-          --info
-          -Dorg.gradle.daemon=false
-          -Dorg.gradle.workers.max=2
+        id: build
+        run: |
+          gradle :app:assembleRelease --stacktrace -Dorg.gradle.daemon=false 2>&1 | tee build.log
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
           JAVA_HOME: ${{ env.JAVA_HOME }}
 
+      - name: Publish build error log on failure
+        if: failure()
+        run: |
+          mkdir -p ci-log
+          cp build.log ci-log/ci-error.log || echo "no build.log"
+          git config user.email "ci@github.com"
+          git config user.name "ci-bot"
+          git add ci-log/ci-error.log
+          git commit -m "ci: attach build error log" || echo "nothing to commit"
+          git push origin HEAD:refs/heads/ci-error --force || echo "push failed"
+
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: piano-check-apk
