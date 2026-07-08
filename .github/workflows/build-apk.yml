@@ -45,23 +45,19 @@ jobs:
           cat local.properties
 
       - name: Build release APK
-        id: build
         run: |
           gradle :app:assembleRelease --stacktrace -Dorg.gradle.daemon=false 2>&1 | tee build.log
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
           JAVA_HOME: ${{ env.JAVA_HOME }}
 
-      - name: Publish build error log on failure
-        if: failure()
-        run: |
-          mkdir -p ci-log
-          cp build.log ci-log/ci-error.log || echo "no build.log"
-          git config user.email "ci@github.com"
-          git config user.name "ci-bot"
-          git add ci-log/ci-error.log
-          git commit -m "ci: attach build error log" || echo "nothing to commit"
-          git push origin HEAD:refs/heads/ci-error --force || echo "push failed"
+      - name: Upload build log (always, for diagnosis)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: warn
 
       - name: Upload APK
         if: success()
