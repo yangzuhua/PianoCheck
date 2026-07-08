@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.pianocheck.data.AppSettings
 import com.example.pianocheck.data.SettingsRepository
 import com.example.pianocheck.service.AudioMonitorService
@@ -27,7 +28,7 @@ import java.util.concurrent.TimeUnit
 fun MonitorScreen(repo: SettingsRepository) {
     val context = LocalContext.current
     val state by PracticeSessionManager.state.collectAsState()
-    val settings by repo.settingsFlow.collectAsState(initial = AppSettings())
+    val settings by repo.settingsFlow.collectAsStateWithLifecycle(initialValue = AppSettings())
 
     var hasAudioPerm by remember { mutableStateOf(false) }
 
