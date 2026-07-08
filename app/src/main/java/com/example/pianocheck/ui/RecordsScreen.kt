@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -16,7 +17,7 @@ import java.util.*
 
 @Composable
 fun RecordsScreen(repo: SessionRepository) {
-    val sessions by repo.allSessions.collectAsState(initial = emptyList())
+    val sessions by repo.allSessions.collectAsStateWithLifecycle(initialValue = emptyList())
     val scope = rememberCoroutineScope()
     val fmt = remember { SimpleDateFormat("MM-dd HH:mm", Locale.CHINESE) }
 
